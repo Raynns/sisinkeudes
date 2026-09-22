@@ -1,29 +1,53 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\ActivityController;
+use App\Http\Controllers\SupplierController;
 use App\Models\Transaction;
+use App\Models\Activity;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    // Mengambil semua data transaksi, diurutkan dari yang terbaru
-    $transactions = Transaction::latest()->get(); 
+Route::middleware(['auth', 'verified'])->group(function () {
     
-    return view('dashboard', compact('transactions'));
-})->middleware(['auth', 'verified'])->name('dashboard');
+    // Dashboard APBDes
+    Route::get('/dashboard', function () {
+        $totalPemasukan = Transaction::where('type', 'pemasukan')->sum('amount');
+        $totalPengeluaran = Transaction::where('type', 'pengeluaran')->sum('amount');
+        $saldoAkhir = $totalPemasukan - $totalPengeluaran;
 
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+        $totalAPBDes = Activity::sum('budget');
+        $persentaseRealisasi = $totalAPBDes > 0 ? ($totalPengeluaran / $totalAPBDes) * 100 : 0;
 
-    // Route untuk Transaksi Keuangan
+        $pencairanTerbaru = Transaction::with('activity')
+                            ->where('type', 'pengeluaran')
+                            ->latest()
+                            ->take(5)
+                            ->get();
+
+        $chartData = [
+            'pagu' => $totalAPBDes,
+            'realisasi' => $totalPengeluaran,
+            'sisa' => max(0, $totalAPBDes - $totalPengeluaran)
+        ];
+
+        return view('dashboard', compact(
+            'totalPemasukan', 'totalPengeluaran', 'saldoAkhir', 
+            'totalAPBDes', 'persentaseRealisasi', 'pencairanTerbaru', 'chartData'
+        ));
+    })->name('dashboard');
+
+    // Transaksi Keuangan
     Route::get('/transactions/create', [TransactionController::class, 'create'])->name('transactions.create');
     Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
+
+    // Master Data Kegiatan & Supplier
+    Route::resource('activities', ActivityController::class);
+    Route::resource('suppliers', SupplierController::class);
+
 });
 
 require __DIR__.'/auth.php';

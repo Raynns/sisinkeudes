@@ -9,9 +9,10 @@ class Transaction extends Model
 {
     use HasFactory;
 
+    // 'category' diganti menjadi 'activity_id'
     protected $fillable = [
         'type',
-        'category',
+        'activity_id', 
         'amount',
         'transaction_date',
         'description',
@@ -19,9 +20,13 @@ class Transaction extends Model
         'user_id',
     ];
 
-    // Relasi ke tabel User (siapa yang mencatat)
-    public function user()
-    {
+    // Relasi ke Pembuat (User)
+    public function user() {
         return $this->belongsTo(User::class);
+    }
+
+    // Relasi ke Data Kegiatan
+    public function activity() {
+        return $this->belongsTo(Activity::class);
     }
 }

@@ -2,35 +2,33 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Transaction;
+use App\Models\Activity; // Tambahkan ini!
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class TransactionController extends Controller
 {
     public function create()
     {
-        return view('transactions.create');
+        // Ambil semua data kegiatan untuk opsi dropdown
+        $activities = Activity::orderBy('code', 'asc')->get();
+        return view('transactions.create', compact('activities'));
     }
 
     public function store(Request $request)
     {
-        // 1. Validasi input dari form
         $validated = $request->validate([
             'type' => 'required|in:pemasukan,pengeluaran',
-            'category' => 'required|string|max:255',
+            'activity_id' => 'required|exists:activities,id', // Validasi relasi
             'amount' => 'required|numeric|min:0',
             'transaction_date' => 'required|date',
             'description' => 'nullable|string',
         ]);
 
-        // 2. Tambahkan ID User yang sedang login
         $validated['user_id'] = Auth::id();
-
-        // 3. Simpan ke tabel transactions
         Transaction::create($validated);
 
-        // 4. Kembali ke dashboard dengan pesan sukses
         return redirect()->route('dashboard')->with('success', 'Data transaksi berhasil disimpan!');
     }
 }

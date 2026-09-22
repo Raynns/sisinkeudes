@@ -27,9 +27,16 @@
                         </div>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Kategori</label>
-                        <input type="text" name="category" placeholder="Contoh: Dana Desa, ATK, dll" class="w-full bg-slate-50 border-transparent focus:border-slate-300 focus:ring-0 rounded-xl px-4 py-3 text-sm text-slate-700 transition-colors" required>
+                   <div>
+                        <label class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Pilih Kegiatan (Anggaran)</label>
+                        <select name="activity_id" class="w-full bg-slate-50 border-transparent focus:border-slate-300 focus:ring-0 rounded-xl px-4 py-3 text-sm text-slate-700 transition-colors" required>
+                            <option value="">-- Pilih Kegiatan / Program --</option>
+                            @foreach($activities as $activity)
+                                <option value="{{ $activity->id }}">
+                                    [{{ $activity->code }}] - {{ $activity->name }} (Pagu: Rp {{ number_format($activity->budget, 0, ',', '.') }})
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
 
                     <div>
